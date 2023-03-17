@@ -3,9 +3,6 @@
 
 #include "GoKart.h"
 
-#include "AITypes.h"
-#include "Math/UnitConversion.h"
-
 // Sets default values
 AGoKart::AGoKart()
 {
@@ -89,6 +86,9 @@ void AGoKart::Tick(float DeltaTime)
 	ApplyRotation(DeltaTime);
 	
 	UpdateLocationFromVelocity(DeltaTime);
+
+	const FString RoleNames[ENetRole::ROLE_MAX] = {"None", "Simulated Proxy", "Autonomous Proxy", "Authority"};
+	DrawDebugString(GetWorld(), FVector(0.0f, 0.0f, 1.0f), RoleNames[GetLocalRole()], this, FColor::White, DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -96,8 +96,20 @@ void AGoKart::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAxis("MoveForward", this, &AGoKart::Server_MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AGoKart::Server_MoveRight);
+	PlayerInputComponent->BindAxis("MoveForward", this, &AGoKart::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &AGoKart::MoveRight);		
+}
+
+void AGoKart::MoveForward(float Value)
+{
+	Throttle = Value;
+	Server_MoveForward(Value);	
+}
+
+void AGoKart::MoveRight(float Value)
+{
+	SteeringThrow = Value;
+	Server_MoveRight(Value);	
 }
 
 void AGoKart::Server_MoveForward_Implementation(float Value)
