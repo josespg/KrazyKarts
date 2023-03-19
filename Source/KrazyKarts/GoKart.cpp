@@ -149,7 +149,7 @@ void AGoKart::ApplyRotation(float DeltaTime, float _SteeringThrow)
 
 void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 {
-	const FVector Translation = Velocity * 100 * DeltaTime;
+	const FVector Translation = Velocity * 100.0f * DeltaTime;
 
 	FHitResult Hit;
 	AddActorWorldOffset(Translation, true, &Hit);
