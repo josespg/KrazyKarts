@@ -62,10 +62,16 @@ public:
 
 private:
 
+	void SimulateMove(const FGoKartMove& Move);
+
+	FGoKartMove CreateMove(float DeltaTime) const;
+
+	void ClearAcknowledgedMoves(const FGoKartMove& LastMove);
+
 	FVector GetAirResistance() const;
 	FVector GetRollingResistance() const;
 	void UpdateLocationFromVelocity(float DeltaTime);
-	void ApplyRotation(float DeltaTime);
+	void ApplyRotation(float DeltaTime, float SteeringThrow);
 
 	// The mass of the car (kg).
 	UPROPERTY(EditAnywhere)
@@ -102,33 +108,19 @@ private:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_SendMove(const FGoKartMove& Move);
 
-	//UFUNCTION(Server, Reliable, WithValidation)
-	//void Server_MoveForward(float Value);
-
-	//UFUNCTION(Server, Reliable, WithValidation)
-	//void Server_MoveRight(float Value);
-
 	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
 	FGoKartState ServerState;
 
 	UFUNCTION()
 	void OnRep_ServerState();
 
-	//UPROPERTY(Replicated)
 	FVector Velocity;
 
-	//UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
-	//FTransform ReplicatedTransform;
-	//
-	//UFUNCTION()
-	//void OnRep_ReplicatedTransform();
-	
 	UPROPERTY(Replicated)
 	FGoKartMove CurrentMove;
 
-	UPROPERTY(Replicated)
 	float Throttle;
-	
-	UPROPERTY(Replicated)
 	float SteeringThrow;
+
+	TArray<FGoKartMove> UnacknowledgedMoves;
 };
