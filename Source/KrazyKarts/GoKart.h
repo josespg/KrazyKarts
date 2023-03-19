@@ -63,9 +63,7 @@ public:
 private:
 
 	void SimulateMove(const FGoKartMove& Move);
-
 	FGoKartMove CreateMove(float DeltaTime) const;
-
 	void ClearAcknowledgedMoves(const FGoKartMove& LastMove);
 
 	FVector GetAirResistance() const;
@@ -115,9 +113,6 @@ private:
 	void OnRep_ServerState();
 
 	FVector Velocity;
-
-	UPROPERTY(Replicated)
-	FGoKartMove CurrentMove;
 
 	float Throttle;
 	float SteeringThrow;
