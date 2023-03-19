@@ -6,6 +6,40 @@
 #include "GameFramework/Pawn.h"
 #include "GoKart.generated.h"
 
+USTRUCT()
+struct FGoKartMove
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	float Throttle;
+
+	UPROPERTY()
+	float SteeringThrow;
+
+	UPROPERTY()
+	float DeltaTime;
+
+	// To distinguish moves, use a timestamp like this, time where the move started.
+	UPROPERTY()
+	float Time;
+};
+
+USTRUCT()
+struct FGoKartState
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FTransform Transform;
+
+	UPROPERTY()
+	FVector Velocity;
+
+	UPROPERTY()
+	FGoKartMove LastMove;
+};
+
 UCLASS()
 class KRAZYKARTS_API AGoKart : public APawn
 {
@@ -64,15 +98,37 @@ private:
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
-	
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveForward(float Value);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveRight(float Value);
+	void Server_SendMove(const FGoKartMove& Move);
 
+	//UFUNCTION(Server, Reliable, WithValidation)
+	//void Server_MoveForward(float Value);
+
+	//UFUNCTION(Server, Reliable, WithValidation)
+	//void Server_MoveRight(float Value);
+
+	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
+	FGoKartState ServerState;
+
+	UFUNCTION()
+	void OnRep_ServerState();
+
+	//UPROPERTY(Replicated)
 	FVector Velocity;
 
+	//UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
+	//FTransform ReplicatedTransform;
+	//
+	//UFUNCTION()
+	//void OnRep_ReplicatedTransform();
+	
+	UPROPERTY(Replicated)
+	FGoKartMove CurrentMove;
+
+	UPROPERTY(Replicated)
 	float Throttle;
+	
+	UPROPERTY(Replicated)
 	float SteeringThrow;
 };
