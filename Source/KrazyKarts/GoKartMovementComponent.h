@@ -23,6 +23,12 @@ struct FGoKartMove
 	// To distinguish moves, use a timestamp like this, time where the move started.
 	UPROPERTY()
 	float Time;
+
+	inline bool IsValid() const
+	{
+		return FMath::Abs(Throttle) <= 1.0f &&
+			FMath::Abs(SteeringThrow) <= 1.0f;
+	};
 };
 
 
