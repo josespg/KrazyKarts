@@ -46,19 +46,21 @@ void UGoKartReplicationComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 	const FGoKartMove& LastMove = MovementComponent->GetLastMove();
 
+	// We are a client owning this vehicle
 	if (GetOwnerRole() == ROLE_AutonomousProxy)
 	{
 		UnacknowledgedMoves.Add(LastMove);
 		Server_SendMove(LastMove);
 	}
 
-	// We are the server and in control of the pawn
+	// We are the server and in control of this pawn (listen server)
 	//if(/*GetOwnerRole() == ROLE_Authority && Pawn->IsLocallyControlled())
 	if (GetOwner()->GetRemoteRole() == ROLE_SimulatedProxy)
 	{
 		UpdateServerState(LastMove);
 	}
 
+	// We are a client and this vehicle is owned by another client
 	if(GetOwnerRole() == ROLE_SimulatedProxy)
 	{
 		//MovementComponent->SimulateMove(ServerState.LastMove);
@@ -78,6 +80,8 @@ void UGoKartReplicationComponent::UpdateServerState(const FGoKartMove& Move)
 
 void UGoKartReplicationComponent::ClientTick(float DeltaTime)
 {
+	// Cubic interpolation for vehicle owned by other clients
+	
 	ClientTimeSinceUpdate += DeltaTime;
 
 	// We need at least two updates between doing a LERP
@@ -111,6 +115,11 @@ void UGoKartReplicationComponent::InterpolateLocation(const FHermiteCubicSpline&
 {
 	FVector NewLocation = Spline.InterpolateLocation(LerpRatio);
 	//GetOwner()->SetActorLocation(NewLocation);
+
+	// We interpolate the mesh of the vehicle (location, velocity and rotation) per frame
+	// But the collision box only is updated when receiving an update from the server with
+	// the real position in the server, aka, no interpolation for the collision box, to
+	// avoid collision artifacts. (This comment applies to InterpolateVelocity and InterpolateRotation).
 	if (MeshOffsetRoot)
 	{
 		MeshOffsetRoot->SetWorldLocation(NewLocation);
@@ -155,13 +164,17 @@ void UGoKartReplicationComponent::OnRep_ServerState()
 
 void UGoKartReplicationComponent::AutonomousProxy_OnRep_ServerState()
 {
+	// This is run in client for a vehicle owned by this client
+
 	if (!MovementComponent)	return;
 
 	GetOwner()->SetActorTransform(ServerState.Transform);
 	MovementComponent->SetVelocity(ServerState.Velocity);
 
+	// Clear server moves older than the one we have just received
 	ClearAcknowledgedMoves(ServerState.LastMove);
 
+	// And replay the moves newer
 	for (const FGoKartMove& Move : UnacknowledgedMoves)
 	{
 		MovementComponent->SimulateMove(Move);
@@ -170,6 +183,8 @@ void UGoKartReplicationComponent::AutonomousProxy_OnRep_ServerState()
 
 void UGoKartReplicationComponent::SimulatedProxy_OnRep_ServerState()
 {
+	// This is run in client for a vehicle owned by another client
+
 	if (!MovementComponent)	return;
 
 	ClientTimeBetweenLastUpdates = ClientTimeSinceUpdate;
